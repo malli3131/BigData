@@ -70,24 +70,24 @@ Storage Types:
 Pig Latin has seveal storage types, which are used to parse the content while reading and writing from/to File System(HDFS)
 The following are some of the Storage Types:
 
-Storage Type:                 Read/Load           Store/Write
---------------------------------------------------------------
-PigStorage                    Yes                 Yes
-HBaseStorage                  Yes                 Yes
-JsonStorage                   Yes                 Yes
-BinStorage                    Yes                 Yes
-HCatLoader                    Yes                 NO
-HCatStorer                    NO                  Yes
-SequenceLoader                Yes                 NO
-SequenceStorer                NO                  Yes
-ParquetLoader                 Yes                 NO
-ParquetStorer                 NO                  Yes
-JsonStorage                   Yes                 Yes                         
-TextLoader                    Yes                 NO
-AvroStorage                   Yes                 Yes
-TrevniStorage                 Yes                 Yes
-AccumuloStorage               Yes                 Yes
-
+|Storage Type:               |Read/Load           |Store/Write |
+|----------------------------|--------------------|------------|
+| PigStorage|                    YES|                 YES|
+| HBaseStorage|                  YES|                 YES|
+| JsonStorage|                   YES|                 YES|
+| BinStorage|                    YES|                 YES|
+| HCatLoader|                    YES|                 NO |
+| HCatStorer|                    NO |                 YES|
+| SequenceLoader|                YES|                 NO |
+| SequenceStorer|                NO |                 YES|
+| ParquetLoader|                 YES|                 NO |
+| ParquetStorer|                 NO |                 YES|
+| JsonStorage|                   YES|                 YES|                         
+| TextLoader|                    YES|                 NO |
+| AvroStorage|                   YES|                 YES|
+| TrevniStorage|                 YES|                 YES|
+| AccumuloStorage|               YES|                 YES|
+---------------------------------------------------------
 default storage type is PigStorage()
 PigStorage uses new line as record delimiter, tab as field delimiter by default.
 
