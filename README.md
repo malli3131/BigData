@@ -5,7 +5,7 @@
     * [Hadoop]()
     * [HDFS]()
     * [MapReduce]()
-    * [Pig]()
+    * [Pig](https://github.com/malli3131/BigData/tree/master/Pig)
     * [Hive]()
     * [Sqoop]()
     * [Kafka]()
