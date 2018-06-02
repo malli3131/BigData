@@ -88,6 +88,7 @@ The following are some of the Storage Types:
 | TrevniStorage|                 YES|                 YES|
 | AccumuloStorage|               YES|                 YES|
 ---------------------------------------------------------
+
 default storage type is PigStorage()
 PigStorage uses new line as record delimiter, tab as field delimiter by default.
 
@@ -119,7 +120,7 @@ only either reading or storing not for processing the data. The following are in
 load - input - read the data from file system
 store - output - store the data into file system
 dump - output (it prints the data in console)
-
+```
 Load Usage:
 ----------
 relation = load 'path of the file in file system' using <storage type> as <schema>
@@ -129,6 +130,7 @@ relation = load 'path of the file in file system' [Default storage type used and
 
 example:
 mydata = load '/pig/ratings' using PigStorage(':') as (uid:int, mid:int, rating:double, time:long);
+```
 
 Pig Latin also offers two classes called LoadFunc, StoreFunc for developing custom input and output operators. These two classes
 can be extension points two extend the input and output operators.
@@ -159,18 +161,20 @@ transformations, aggregations, etc... These operators look like SQL Operators. T
 21. rank
 
 1. foreach: It used to iterate the relations and performs the data transformations, projections, aggregations etc..
-   
+   ```
    Usage: relation2 = foreach <relation1> generate ....
    Example: mydata = load '/pig/ratings' using PigStorage() as (uid:int, mid:int, rating:double, time:long);
             projdata = foreach mydata generate mid, rating;
-            
+   ```         
 2. filter: used to filter the data based on condition
+   ```
    usage: relation2 = filter relation1 by filed condition
    example: fltdata = filter projdata by rating > 0.0;
-   
+   ```
 3. group: used to group the data. This grouping can be done in two ways.
           1. by field
           2. by all
+   ```
    usage for by field:
           relation2 = group relation by field;
    example:
@@ -180,15 +184,19 @@ transformations, aggregations, etc... These operators look like SQL Operators. T
           relation2 = group relation all;
    example:
           grpdata = group fltdata all;
+   ```
 4. order by: Used to sort the data either in asc order or desc order
+   ```
    usage: relation2 = order relation1 by field [asc/desc] default asc order
    example: orddata = order avgdata by avgrat desc;
- 
+   ```
 5. limit: used to limit the results to a particular number
+   ```
    usage: relation2 = limit relation1 n
    example: lmtdata = limit orddata 10;
-   
+   ```
 6. distinct: used to get the distnct values from the data. It works on only tuples.
+   ```
    usage: relation2  = distinct relation1;
    Example: To get the distinct movies:
    movies = load '/pig/movies' using PigStorage(':') as (mid:int, title:chararray, genre:chararray);
@@ -196,10 +204,11 @@ transformations, aggregations, etc... These operators look like SQL Operators. T
    uniq = distinct mproj;
    
    Wrong One:  uniq = distinct movies.title;
-   
+   ```
  7. Sample: Used to get the sample out of the total data. This sample represents the entire data. Here the sampling algorithm is
     random sampling.
+    ```
     usage: relation2 = sample relation1 percentage;
     example: sampldata = sample fltdata 0.1; it gets the 10% of the total data
-    
+    ```
  8. 
