@@ -441,4 +441,266 @@ dump mysum;
 
 
 
+assert operator example
+
+sample data set is: 
+
+1,2,3
+4,2,1
+8,3,4
+4,3,3
+7,2,5
+8,4,3
+
+mydata = load '/pig/nums' using PigStorage(',') as (n1:int, n2:int, n3:int);
+ASSERT mydata by n1 > 2, 'n1 should be greater than 2';
+
+In general most of the input data fits with scalar data types, but some times we have to deal with complex input data sets like
+
+(3,8,9) (4,5,6)
+(1,4,7) (3,7,5)
+(2,5,8) (9,5,8)
+
+mydata = LOAD '/pig/data' AS (col1:tuple(n11:int, n12:int,n13:int),col2:tuple(n21:int,t22:int,t23:int));
+projdata = foreach mydata generate col1.n11 as num1, col2.n21 as num2;
+
+
+Base ball data example
+a sample record is:
+
+Jorge Posada    New York Yankees        {(Catcher),(Designated_hitter)} [games#1594,hit_by_pitch#65,on_base_percentage#0.379,grand_slams#7,home_runs#243,at_bats#5365,sacrifice_flies#43,gdb#163,sacrifice_hits#1,ibbs#71,base_on_balls#838,hits#1488,rbis#964,slugging_percentage#0.48,batting_average#0.277,triples#9,doubles#342,strikeouts#1278,runs#817]
+
+baseball = load '/pig/baseball' as (name:chararray, team:chararray, postition:bag{t:(p:chararray)}, bat:map[]);
+mydata = foreach baseball generate name, bat#'base_on_balls' - bat#'ibbs'
+
+cube operator example
+
+sample data:
+
+car, 2012, midwest, ohio, columbus, 4000
+car, 2013, midwest, texas, austin, 5000
+car, 2014, midwest, ohio, columbus, 6000
+car, 2011, midwest, california, palo alto, 14000
+car, 2012, midwest, ohio, columbus, 3000
+
+example:
+
+cars = load '/pig/cars' as (product:chararray, year:int, region:chararray, state:chararray, city:chararray, sales:long);
+cubedata = CUBE cars BY CUBE(product,year);
+result = FOREACH cubedata GENERATE FLATTEN(group), SUM(cube.sales) AS totalsales;
+
+define dividend_analysis (daily, year, daily_symbol, daily_open, daily_close)
+returns analyzed {
+	divs          = load 'pig/divs' as (exchange:chararray,
+						symbol:chararray, date:chararray, dividends:float);
+	divsthisyear  = filter divs by date matches '$year-.*';
+	dailythisyear = filter $daily by date matches '$year-.*';
+	jnd           = join divsthisyear by symbol, dailythisyear by $daily_symbol;
+	$analyzed     = foreach jnd generate dailythisyear::$daily_symbol, $daily_close - $daily_open;
+};
+
+daily 	= load '/pig/stocks' as (exchange:chararray, symbol:chararray,
+			date:chararray, open:float, high:float, low:float, close:float,
+			volume:int, adj_close:float);
+results = dividend_analysis(daily, '2009', 'symbol', 'open', 'close');
+dump results;
+
+stocks = load '/pig/stocks' as (market:chararray, stock:chararray, sdate:chararray, open:double, high:double, low:double, close:double, volume:long, adj_close:double);
+aggdata = mapreduce '/home/naga/bigdata/volume.jar' store stocks into '/pig/mystocks' load '/pig/aggvolume' as (stock:chararray, aggvolume:long) `StockTotalVolume /pig/mystocks /pig/aggvolume`;
+dump aggdata
+
+mapreduce operator example:
+----------------------------
+Download the data NYSE_daily from alangates programming pig data folder:
+https://github.com/alanfgates/programmingpig/blob/c77436c2d0416574966a2e9925b4ee4b6eb5caca/data/NYSE_daily
+
+We have already a MapReduce program for computing aggregated volume for stock i.e volume.jar
+
+Use this MapReduce program inside pig script and no need to develop the same logic in PigLatin
+
+
+example:
+
+stocks = load '/pig/stocks' as (market:chararray, stock:chararray, sdate:chararray, open:double, high:double, low:double, close:double, volume:long, adj_close:double);
+
+aggdata = mapreduce '/home/naga/bigdata/volume.jar' store stocks into '/pig/mystocks' load '/pig/aggvolume' as (stock:chararray, aggvolume:long) `StockTotalVolume /pig/mystocks /pig/aggvolume`;
+
+
+The above pig latin statement broken as follows:
+
+1. store stocks into '/pig/mystocks'
+2. hadoop jar /home/naga/bigdata/volume.jar StockTotalVolume /pig/mystocks /pig/aggvolume
+3. aggdata = load '/pig/aggvolume' as (stock:chararray, aggvolume:long);
+
+In simple words.. PigLatin statements ----> MapReduce Job ---> PigLatin statements
+
+
+
+stream operator example:
+
+Download the dataset NYSE_dividends from alangates programming pig data folder:
+https://github.com/alanfgates/programmingpig/blob/c77436c2d0416574966a2e9925b4ee4b6eb5caca/data/NYSE_dividends
+
+
+write a perl program to enable control: "highdiv.pl"
+
+#!/usr/bin/perl
+
+use strict;
+
+while (<>) {
+	my @fields = split;
+	if ($fields[3] > 1.0) {
+		print join("\t", @fields) . "\n"
+	}
+}
+
+change the file permission of perl script:
+chmod 755 <path>/highdiv.pl
+
+divs = load '/pig/divs' as (exchange, symbol, date, dividends);
+highdivs = stream divs through `/home/naga/bigdata/highdiv.pl` as (exchange, symbol, date, dividends);
+dump highdivs;
+
+
+we can also ship the external program using the following statement:
+
+define highdivs `/home/naga/bigdata/highdiv.pl` ship('/home/naga/bigdata/highdiv.pl');
+
+divs = load '/pig/divs' as (exchange, symbol, date, dividends);
+highdivs = stream divs through highdivs as (exchange, symbol, date, dividends);
+dump highdivs;
+
+
+data = load '/pig/news';
+words = foreach data generate flatten(TOKENIZE((chararray)$0)) as word;
+tokens = filter words by word matches '\\w+';
+gprd = group tokens by word;
+cntd = foreach gprd generate group, COUNT(tokens) as fre;
+ord = order cntd by fre desc;
+lmt = limit ord 10;
+dump lmt;
+
+names = load '/pig/names' using PigStorage() as (fname:chararray, lname:chararray);
+
+ages = load '/pig/ages' using PigStorage() as (age:int);
+
+record = union names, ages;
+
+dump record;
+
+data = load '/pig/stocks' using PigStorage()as (market: chararray, stockname : chararray, date:chararray, open:float, high:float, low:float, close:float, volume:long,overall:float);
+project = foreach data generate stockname, volume;
+gprd = group project by stockname;
+cntd = foreach gprd generate group, COUNT(project.stockname);
+volume = foreach gprd generate group, SUM(project.volume);
+store cntd into '/pig/counts' using PigStorage();
+store volume into '/pig/volume' using PigStorage();
+
+
+ages = load '/pig/ages' using PigStorage() as (age:int);
+split ages into young if age <25, middle if (age >25 AND age <30), old if age >30;
+dump young;
+dump middle;
+dump old;
+
+data = load '/daily' using PigStorage();
+test = sample data 0.01;
+dump test;
+
+ages = load '/pig/ages' using PigStorage() as (age:int);                           
+data = order ages by age desc;
+ltd = limit data 3;
+dump data;
+
+data = load '/pig/cross' using PigStorage() as (fname:chararray,lname:chararray,age:int);
+age24 = filter data by age == 24;                                                        
+dump age24
+
+ranks = load '/pig/ranks' using PigStorage() as (player:chararray,con:chararray,rank:int);
+country = load '/pig/country' using PigStorage() as (country:chararray, con:chararray);
+--inner join
+rankings = join ranks by con, country by con;
+--right outer join
+rankings = join ranks by con right, country by con;
+--full outer join
+rankings = join ranks by con full, country by con; 
+--left outer join
+rankings = join ranks by con left, country by con
+dump rankings
+
+names = load '/pig/names' using PigStorage() as (fname:chararray, lname:chararray);       
+ages = load '/pig/ages' using PigStorage() as (age:int);                                  
+crs = cross names, ages;
+dump crs
+
+nums = load '/pig/numbers' using PigStorage() as (num1:int, num2:int);
+arth = foreach nums generate num1, num2, num1 + num2 as add, num2 - num1 as sub, num1 * num2 as mul;
+dump arth;
+
+MATH:
+
+mydata = load 'number' as (num:double);
+ab = foreach mydata generate ABS(num);
+dump ab;
+
+mydata = load 'number' as (num:double);
+acos = foreach mydata generate ACOS(num);
+dump acos;
+
+mydata = load '/stats/number' as (num:double);
+asin = foreach mydata generate ASIN(num);
+dump asin;
+
+mydata = load '/stats/number' as (num:double);
+atan = foreach mydata generate ATAN(num);
+dump atan;
+
+mydata = load '/stats/number' as (num:double);
+ceil = foreach mydata generate CEIL(num);
+dump ceil;
+
+mydata = load '/stats/number' as (num:double);
+cos = foreach mydata generate COS(num);
+dump cos;
+
+mydata = load '/stats/number' as (num:double);
+cosh = foreach mydata generate COSH(num);
+dump cosh;
+
+mydata = load '/stats/number' as (num:double);
+round = foreach mydata generate ROUND(num);
+dump round;
+
+mydata = load '/stats/number' as (num:double);
+croot = foreach mydata generate CBRT(num);
+dump croot;
+
+mydata = load '/stats/number' as (num:double);
+exp = foreach mydata generate EXP(num);
+dump exp;
+
+mydata = load '/stats/number' as (num:double);
+floor = foreach mydata generate FLOOR(num);
+dump floor;
+
+mydata = load '/stats/number' as (num:double);
+log = foreach mydata generate LOG(num);
+dump log;
+
+mydata = load '/stats/number' as (num:double);
+gprd = group mydata by num;
+agg = foreach gprd generate group, AVG(mydata.num);
+dump agg;
+
+mydata = load '/stats/info' using PigStorage() as (company:chararray, sales:double);
+uniq = distinct mydata;
+gprd = group uniq by company;
+cntd = foreach gprd generate group, COUNT(uniq.sales) as total;
+ord = order cntd by total desc;
+dump ord; 
+
+stats = foreach gprd generate group, MIN(uniq.sales) as min, MAX(uniq.sales) as max, MEAN(uniq.sales);
+
+
 ```
