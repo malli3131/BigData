@@ -1,0 +1,59 @@
+1.  Introduction Lipstick:
+
+    Lipstick combines a graphical depiction of a Pig workflow with information about the job as it executes,
+    giving developers insight that previously required a lot of sifting through logs (or a Pig expert) to piece together
+
+2.  Installing and Running Lipstick:
+
+    The following steps are required to install lipstick:
+    
+    Step1:  Download the source code from git repository
+        
+            cmd> git clone https://github.com/Netflix/Lipstick.git
+            Create a env variable LIPSTICK_HOME=<path to home of lipstick dir> in .bashrc file
+            
+    Step2:  Installing runtime dependencies
+            Install graphviz --> rich set of graph drawing tools
+    
+            Ubuntu: sudo apt-get install graphviz
+    
+            Cent OS: yum install graphviz
+    
+    Running Lipstick Locally....
+    -----------------------------
+    Step3:  Start the server
+            cmd> cd $LIPSTICK_HOME
+            cmd> ./gradlew debug -PwithHadoop
+            
+            cmd> cd quickstart/
+            cmd> ../example1
+            
+    Running Lipstick on Hadoop Cluster....
+    --------------------------------------
+    Step4:  Install the MySQL database
+            Create the database called lipstick with xxxxxx root and password xxxxxxxx
+            Create the lipstick properties file called lipstick.properties under the /etc/ directory
+            
+            content of lipstick.properties is:
+            ----------------------------------
+            dataSource.driverClassName=com.mysql.jdbc.Driver
+            dataSource.username=xxxxx
+            dataSource.password=xxxxx
+            dataSource.dbCreate=update
+            dataSource.url=jdbc:mysql://localhost:3306/lipstick?useUnicode=true&characterEncoding=utf8&autoReconnect=true
+        
+    Step5:  cmd> cd $LIPSTICK_HOME
+            cmd> ./gradlew
+            This will create the lipstic-x.x.war file in build directory of the lipstick home
+            
+    Step6:  Install the apache tomcat to deploy lipstick war
+    Step7:  Please increase the size of the war file to deploy in tomcat by modifying the webapps/manager/WEB-INF/web.xml to 100 MB (Default 
+            allowed war size is 50 MB, but lipstick war more than 50 MB)
+    Step8:  Copy the all the jars of the lipstick from its build directory to hadoop lib
+            cmd> cp $LIPSTICK_HOME/build/*.jar $HADOOP_HOME/lib
+            Run this command: hadoop jar lipstick-console-0.6-SNAPSHOT.jar -Dlipstick.server.url=http://hadoop:8080/lipstick-1.0
+    Step9:  We will see the lipstick web interface on http://hadoop:8080/lipstick-1.0/
+    
+    Step8 will take to the grunt shell, execute the pig latin statements, see the lipstick web interface....
+    
+    *******************Installation Part is done *********************************
