@@ -24,3 +24,6 @@
   * Extensibility
   * Productivity
   * Well tested
+  
+## Pig Architecture:
+![Pig Architecture](https://github.com/malli3131/BigData/blob/master/Pig/Pig_Architecture.jpg)
